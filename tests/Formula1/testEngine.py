@@ -7,4 +7,4 @@ engine = MTSEngine(window=5)
 df = df_raw[["LapTime"]]
 
 out = engine.run(df)
-print(out.tail())
+print(out.to_string())

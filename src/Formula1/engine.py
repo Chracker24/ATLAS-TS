@@ -1,5 +1,7 @@
 import pandas as pd
 from .validation import find_error_inInput
+from .regime_instantaneous import classify_regimes
+from .regime_persistance import regime_persistance
 
 class MTSEngine:
     """
@@ -31,5 +33,6 @@ class MTSEngine:
         #Rolling Variance
         result["Rolling Variance"] = result[signal_col].rolling(window = self.window, min_periods=self.window).var()
 
-
+        result["Regime_Raw"] = classify_regimes(result["Rolling Variance"], self.window)
+        result["Regime_Final"] = regime_persistance(result["Regime_Raw"], confirm=2)
         return result
