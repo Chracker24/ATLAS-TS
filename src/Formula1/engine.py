@@ -2,15 +2,41 @@ import pandas as pd
 from .validation import find_error_inInput
 from .regime_instantaneous import classify_regimes
 from .regime_persistance import regime_persistance
-
+from .confidence import confidenceScore, forecastingAllowed, confidenceBand
+sensitivityBand ={
+        "strict" : {
+            "alpha" : 0.1,
+            "beta" : 1.5,
+            "confirm" : 2
+        },
+        "normal" : {
+            "alpha" : 0.2,
+            "beta" : 2.0,
+            "confirm" : 3
+        },
+        "loose" : {
+            "alpha" : 0.3,
+            "beta" : 3.0,
+            "confirm" : 4
+        }
+        
+    }
 class MTSEngine:
     """
     core Multi Domain Time Series (MTS) Engine
     Stateless, local and Rolling statistics-based
     """
+    
 
-    def __init__(self, window : int = 5):
+    def __init__(self, window : int = 5, sensitivity : str = "normal"):
         self.window = window
+        if sensitivity not in sensitivityBand.keys():
+            raise ValueError(f"Sensitivty must be one of {list(sensitivityBand.keys())}")
+        self.sensitivity = sensitivity
+        self.alpha = sensitivityBand[sensitivity]["alpha"]
+        self.beta = sensitivityBand[sensitivity]["beta"]
+        self.confirm = sensitivityBand[sensitivity]["confirm"]
+
 
     def run(self, df:pd.DataFrame) -> pd.DataFrame:
         """
@@ -33,6 +59,15 @@ class MTSEngine:
         #Rolling Variance
         result["Rolling Variance"] = result[signal_col].rolling(window = self.window, min_periods=self.window).var()
 
-        result["Regime_Raw"] = classify_regimes(result["Rolling Variance"], self.window)
-        result["Regime_Final"] = regime_persistance(result["Regime_Raw"], confirm=2)
+        result["Regime_Raw"] = classify_regimes(result["Rolling Variance"], self.window, alpha = self.alpha, beta = self.beta)
+        result["Regime_Final"] = regime_persistance(result["Regime_Raw"], confirm=self.confirm)
+
+        result["Confidence"] = confidenceScore(result["Regime_Final"])
+
+        result["Forecasting_Allowed"] = forecastingAllowed(
+        result["Confidence"],
+        threshold=0.7,
+        window=5
+        )
+        result["Confidence_Band"] = confidenceBand(result["Confidence"])
         return result
