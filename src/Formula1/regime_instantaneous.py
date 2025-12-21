@@ -10,7 +10,7 @@ def classify_regimes(
     Classify regimes based on rolling variance.
 
     Returns:
-    - Unknown
+    - Too Early
     - Stable
     - Transitional
     - Unstable
@@ -21,7 +21,7 @@ def classify_regimes(
         min_periods=window
     ).median()
 
-    regimes = pd.Series("Unknown", index=rolling_variance.index)
+    regimes = pd.Series("Too Early", index=rolling_variance.index)
 
     regimes[rolling_variance <= baseline * alpha] = "Stable"
     regimes[

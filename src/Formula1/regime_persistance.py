@@ -5,14 +5,14 @@ def regime_persistance(
         confirm : int = 3
 ) -> pd.Series:
     final_regime = []
-    current_regime = "Unknown"
+    current_regime = "Too Early"
     counter = 0
 
 
     for regime in instant:
-        if regime == "Unknown":
-            final_regime.append("Unknown")
-            current_regime = "Unknown"
+        if regime == "Too Early":
+            final_regime.append("Too Early")
+            current_regime = "Too Early"
             counter = 0
 
             continue
@@ -22,7 +22,7 @@ def regime_persistance(
             final_regime.append(current_regime)
             continue
         
-        #Determin Regime Change 
+        #Determine Regime Change 
 
         candidate = regime
         if current_regime=="Unstable" and regime == "Stable":
