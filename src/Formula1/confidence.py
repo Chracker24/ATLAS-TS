@@ -12,7 +12,7 @@ def confidenceScore(
     confidenceMap = {
         "Unknown" : 0.0,
         "Unstable" : 0.1,
-        "Transitional" : 0.4,
+        "Transitional" : 0.5,
         "Stable" : 0.9
     }
 
@@ -29,7 +29,7 @@ def forecastingAllowed(
     Returns a boolean indicating if forecasting is allowed
     """
 
-    forecast = confidence.rolling(window=window-2, min_periods=window-2).min()
+    forecast = confidence.rolling(window=window-2, min_periods=window-2).mean()
     forecastAllowed = []
     for i in forecast:
         if pd.isna(i):

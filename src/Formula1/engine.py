@@ -3,6 +3,7 @@ from .validation import find_error_inInput
 from .regime_instantaneous import classify_regimes
 from .regime_persistance import regime_persistance
 from .confidence import confidenceScore, forecastingAllowed, confidenceBand
+from .engineFeedback import reasons, summary
 sensitivityBand ={
         "strict" : {
             "alpha" : 0.1,
@@ -70,4 +71,17 @@ class MTSEngine:
         window=5
         )
         result["Confidence_Band"] = confidenceBand(result["Confidence"])
+        # Engine Reasons, Summary and Data Quality checks to be added
+        result["Reasons"] = reasons(result["Regime_Final"])
+        result["Summary"] = result["Reasons"].apply(summary)
+        return result
+    
+    def results_schema(self, df:pd.DataFrame) -> pd.DataFrame:
+        """
+        Provides a proper schema for domain agnostic results
+        """
+
+        result = df.copy()
+        signal_col = result.select_dtypes(include="number").columns[0]
+        result = result[[signal_col, "Confidence_Band","Reasons","Summary"]].rename(columns={signal_col: f"Signal ({signal_col})", "Confidence_Band" : "FORECASTING_STATE", "Reasons": "Forecasting Reasons"})
         return result
