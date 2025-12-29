@@ -35,16 +35,6 @@ ATLAS-F **never overrides intelligence decisions**.
 
 ---
 
-## 🤝 Human & LLM Interpretation (Planned)
-An optional interpretation layer (e.g. LLM-based) will:
-- Explain system decisions in natural language
-- Ask contextual questions
-- Summarise risk and uncertainty
-
-🔒 This layer **cannot modify system state** — it explains, not decides.
-
----
-
 ## 🌍 Domain-Agnostic by Design
 ATLAS makes **no domain assumptions**.  
 All logic is driven by the *relative behaviour* of the series itself.
