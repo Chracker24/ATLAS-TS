@@ -1,28 +1,68 @@
-# MTS-IE — Multi-Domain Time-Series Intelligence Engine
+# ATLAS 🚀  
+### Adaptive Time Series Intelligence & Forecasting System
 
-MTS-IE is a modular, deployable machine learning system designed to ingest time-series data from multiple domains and perform **forecasting**, **anomaly detection**, and **uncertainty-aware simulation**.  
-The project focuses on end-to-end ML system design, emphasising real-world applicability, model comparison, and decision-support under uncertainty.
+ATLAS is a **multi-domain time-series decision intelligence framework** designed to **understand data before predicting it**.
 
-## Target Domains
+> **Forecasting should never come before understanding.**
 
-### 🏎️ F1 / Motorsports
-Time-series analysis of motorsport telemetry, including lap-time trends, tyre degradation patterns, and strategy-relevant performance signals.
+ATLAS separates *judgement* from *prediction* to ensure forecasts are **trustworthy, explainable, and context-aware**.
 
-### 📈 Finance
-Forecasting and analysis of financial time series such as prices and volatility, anomaly detection, and Monte Carlo–based risk and scenario simulation.
+---
 
-### 🏥 Health (Outbreak Analysis)
-Population-level outbreak trend forecasting using disease incidence data, abnormal growth detection, and probabilistic scenario modelling for early-warning insights.  
-*This module focuses on trend intelligence, not clinical diagnosis.*
+## 🧠 System Architecture
 
-## Core Capabilities
-- Time-series preprocessing and feature engineering  
-- Forecasting using statistical and deep learning models  
-- Anomaly detection on temporal signals  
-- Monte Carlo simulation for uncertainty estimation  
-- Explainability and visual analytics via an interactive interface  
+ATLAS is built around two sibling engines:
 
-## Project Goal
-The goal of MTS-IE is to demonstrate **system-level machine learning engineering** across multiple real-world time-series domains, rather than optimising a single dataset or model.
+### 🔍 ATLAS-IE — Intelligence Engine
+Evaluates the **behavioural state** of a time series before forecasting:
+- Detects regimes (Unknown, Unstable, Transitional, Stable)
+- Assigns confidence based on persistence
+- Explicitly **permits or blocks forecasting**
+- Produces explainable reason codes and summaries
 
+ATLAS-IE is the **final authority** on data trustworthiness.
+
+---
+
+### 📊 ATLAS-F — Forecasting Engine *(in progress)*
+Consumes ATLAS-IE outputs and:
+- Forecasts **only when permitted**
+- Adapts horizon and strategy to regime state
+- Handles uncertainty and what-if scenarios
+- Degrades or halts forecasts when stability collapses
+
+ATLAS-F **never overrides intelligence decisions**.
+
+---
+
+## 🤝 Human & LLM Interpretation (Planned)
+An optional interpretation layer (e.g. LLM-based) will:
+- Explain system decisions in natural language
+- Ask contextual questions
+- Summarise risk and uncertainty
+
+🔒 This layer **cannot modify system state** — it explains, not decides.
+
+---
+
+## 🌍 Domain-Agnostic by Design
+ATLAS makes **no domain assumptions**.  
+All logic is driven by the *relative behaviour* of the series itself.
+
+Example domains:
+- 🏎️ Motorsports telemetry  
+- 📈 Financial markets  
+- 🏥 Population-level health trends  
+- 🖥️ Systems & sensor monitoring  
+
+---
+
+## 🎯 Project Focus
+ATLAS demonstrates:
+- System-level ML engineering
+- Explicit authority boundaries
+- Explainability over blind prediction
+- Governance-first forecasting design
+
+**ATLAS decides *when* forecasting makes sense — before forecasting ever begins.**
 
