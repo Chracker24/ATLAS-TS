@@ -13,17 +13,20 @@ sensitivityBand ={
         "strict" : {
             "alpha" : 0.1,
             "beta" : 1.5,
-            "confirm" : 2
+            "confirm" : 2,
+            "decay": 0
         },
         "normal" : {
             "alpha" : 0.2,
             "beta" : 2.0,
-            "confirm" : 3
+            "confirm" : 3,
+            "decay" : 1
         },
         "loose" : {
             "alpha" : 0.3,
             "beta" : 3.0,
-            "confirm" : 4
+            "confirm" : 4,
+            "decay" : 2
         }
         
     }
@@ -42,6 +45,7 @@ class MTSEngine:
         self.alpha = sensitivityBand[sensitivity]["alpha"]
         self.beta = sensitivityBand[sensitivity]["beta"]
         self.confirm = sensitivityBand[sensitivity]["confirm"]
+        self.decay = sensitivityBand[sensitivity]["decay"]
 
 
     def run(self, df:pd.DataFrame) -> pd.DataFrame:
@@ -49,6 +53,7 @@ class MTSEngine:
         Analyses Time series Dataframe
         returns a new Dataframe with rolling statistics added
         """
+        print (f"Running ATLAS at {self.sensitivity} sensitivity\n")
 
         #Validating input
         find_error_inInput(df, self.window)
@@ -66,7 +71,7 @@ class MTSEngine:
         result["Rolling Variance"] = result[signal_col].rolling(window = self.window, min_periods=self.window).var()
 
         result["Regime_Raw"] = classify_regimes(result["Rolling Variance"], self.window, alpha = self.alpha, beta = self.beta)
-        result["Regime_Final"] = regime_persistance(result["Regime_Raw"], confirm=self.confirm)
+        result["Regime_Final"] = regime_persistance(result["Regime_Raw"], confirm=self.confirm, decay=self.decay)
 
         result["Confidence"] = confidenceScore(result["Regime_Final"])
 
