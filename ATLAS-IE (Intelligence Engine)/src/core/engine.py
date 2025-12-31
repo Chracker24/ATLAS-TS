@@ -8,90 +8,169 @@ from ..regime.regime_persistance import regime_persistance
 
 from ..explainability.explainability import reasons, summary
 
-
-sensitivityBand ={
-        "strict" : {
-            "alpha" : 0.1,
-            "beta" : 1.5,
-            "confirm" : 2,
-            "decay": 0
-        },
-        "normal" : {
-            "alpha" : 0.2,
-            "beta" : 2.0,
-            "confirm" : 3,
-            "decay" : 1
-        },
-        "loose" : {
-            "alpha" : 0.3,
-            "beta" : 3.0,
-            "confirm" : 4,
-            "decay" : 2
-        }
-        
+SENSITIVITY_BAND= {
+    "strict": {
+        "alpha": 0.1,
+        "beta": 1.5,
+        "confirm": 2,
+        "decay": 0,
+        "baseline_method": "q25",
+        "smooth_baseline": False
+    },
+    "normal": {
+        "alpha": 0.2,
+        "beta": 2.0,
+        "confirm": 3,
+        "decay": 1,
+        "baseline_method": "median",
+        "smooth_baseline": True
+    },
+    "loose": {
+        "alpha": 0.3,
+        "beta": 3.0,
+        "confirm": 4,
+        "decay": 2,
+        "baseline_method": "q75",
+        "smooth_baseline": True
     }
+}
+
+
+DOMAINS = {
+    "f1": {
+        "window": 5,
+        "baseline_method": "median",
+        "smooth_baseline": True,
+        "sensitivity": "normal"
+    },
+    "investment_long_term": {
+        "window": 30,
+        "baseline_method": "median",
+        "smooth_baseline": True,
+        "sensitivity": "normal"
+    },
+    "investment_intraday": {
+        "window": 20,
+        "baseline_method": "q25",
+        "smooth_baseline": False,
+        "sensitivity": "strict"
+    },
+    "health_epidemic": {
+        "window": 14,
+        "baseline_method": "q75",
+        "smooth_baseline": True,
+        "sensitivity": "strict"
+    }
+}
+
+
 class MTSEngine:
     """
-    core Multi Domain Time Series (MTS) Engine
-    Stateless, local and Rolling statistics-based
+    Core Multi-Domain Time Series Intelligence Engine (ATLAS-IE)
+
+    Stateless
+    Rolling-statistics based
+    Deterministic and explainable
     """
-    
 
-    def __init__(self, window : int = 5, sensitivity : str = "normal"):
+    def __init__(
+        self,
+        window: int = 5,
+        sensitivity: str = "normal",
+        domain: str | None = None
+    ):
+        # --- Domain override ---
+        if domain:
+            if domain not in DOMAINS:
+                raise ValueError(f"Unknown domain '{domain}'. Choose from {list(DOMAINS.keys())}")
+            
+            domain_config = DOMAINS[domain]
+            self.domain = domain
+            window = domain_config["window"]
+            sensitivity = domain_config["sensitivity"]
+            baseline_method = domain_config["baseline_method"]
+            smooth_baseline = domain_config["smooth_baseline"]
+        else:
+            baseline_method = SENSITIVITY_BAND[sensitivity]["baseline_method"]
+            smooth_baseline = SENSITIVITY_BAND[sensitivity]["smooth_baseline"]
+
+        # --- Sensitivity validation ---
+        if sensitivity not in SENSITIVITY_BAND:
+            raise ValueError(
+                f"Sensitivity must be one of {list(SENSITIVITY_BAND.keys())}"
+            )
+
+        # --- Final assignments ---
         self.window = window
-        if sensitivity not in sensitivityBand.keys():
-            raise ValueError(f"Sensitivty must be one of {list(sensitivityBand.keys())}")
         self.sensitivity = sensitivity
-        self.alpha = sensitivityBand[sensitivity]["alpha"]
-        self.beta = sensitivityBand[sensitivity]["beta"]
-        self.confirm = sensitivityBand[sensitivity]["confirm"]
-        self.decay = sensitivityBand[sensitivity]["decay"]
+        self.alpha = SENSITIVITY_BAND[sensitivity]["alpha"]
+        self.beta = SENSITIVITY_BAND[sensitivity]["beta"]
+        self.confirm = SENSITIVITY_BAND[sensitivity]["confirm"]
+        self.decay = SENSITIVITY_BAND[sensitivity]["decay"]
 
+        self.baseline_method = baseline_method
+        self.smooth_baseline = smooth_baseline
 
-    def run(self, df:pd.DataFrame) -> pd.DataFrame:
+    def run(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Analyses Time series Dataframe
-        returns a new Dataframe with rolling statistics added
+        Analyze a time-series DataFrame and return intelligence output.
         """
-        print (f"Running ATLAS at {self.sensitivity} sensitivity\n")
 
-        #Validating input
+        print(f"Running ATLAS-IE with sensitivity='{self.sensitivity}' with {self.domain if self.domain else "no"} domain")
+
+        # Input validation
         find_error_inInput(df, self.window)
 
-        #Copying the Dataframe 
         result = df.copy()
 
-        #identifying the signal column
+        # Signal Column
         signal_col = result.select_dtypes(include="number").columns[0]
 
-        #Rolling Mean
-        result["Rolling mean"] = result[signal_col].rolling(window = self.window, min_periods=self.window).mean()
+        # Rolling statistics
+        result["Rolling_Mean"] = result[signal_col].rolling(window=self.window,min_periods=self.window).mean()
 
-        #Rolling Variance
-        result["Rolling Variance"] = result[signal_col].rolling(window = self.window, min_periods=self.window).var()
+        result["Rolling_Variance"] = result[signal_col].rolling(window=self.window,min_periods=self.window).var()
 
-        result["Regime_Raw"] = classify_regimes(result["Rolling Variance"], self.window, alpha = self.alpha, beta = self.beta)
-        result["Regime_Final"] = regime_persistance(result["Regime_Raw"], confirm=self.confirm, decay=self.decay)
+        # Regime Classification
+        result["Regime_Raw"] = classify_regimes(
+            result["Rolling_Variance"],
+            self.window,
+            alpha=self.alpha,
+            beta=self.beta,
+            baseline_method=self.baseline_method,
+            smooth_baseline=self.smooth_baseline
+        )
+
+        result["Regime_Final"] = regime_persistance(
+            result["Regime_Raw"],
+            confirm=self.confirm,
+            decay=self.decay
+        )
 
         result["Confidence"] = confidenceScore(result["Regime_Final"])
 
-        result["Forecasting_Allowed"] = forecastingAllowed(
-        result["Confidence"],
-        threshold=0.7,
-        window=5
-        )
+        result["Forecasting_Allowed"] = forecastingAllowed(result["Confidence"], threshold=0.7,window=5)
+
         result["Confidence_Band"] = confidenceBand(result["Confidence"])
-        # Engine Reasons, Summary and Data Quality checks to be added
+
+        # Reasons and Summary
         result["Reasons"] = reasons(result["Regime_Final"])
         result["Summary"] = result["Reasons"].apply(summary)
+
         return result
-    
-    def results_schema(self, df:pd.DataFrame) -> pd.DataFrame:
+
+    def results_schema(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Provides a proper schema for domain agnostic results
+        Produce a schema of the results that is human Readable.
         """
 
         result = df.copy()
         signal_col = result.select_dtypes(include="number").columns[0]
-        result = result[[signal_col, "Confidence_Band","Reasons","Summary"]].rename(columns={signal_col: f"Signal ({signal_col})", "Confidence_Band" : "FORECASTING_STATE", "Reasons": "Forecasting Reasons"})
-        return result
+
+        return result[[signal_col, "Confidence_Band", "Reasons", "Summary"]].rename(
+            columns={
+                signal_col: f"Signal ({signal_col})",
+                "Confidence_Band": "FORECASTING_STATE",
+                "Reasons": "Forecasting_Reasons"
+            }
+        )
