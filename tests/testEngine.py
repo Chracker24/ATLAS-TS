@@ -1,7 +1,7 @@
 import pandas as pd
-from src.core.engine import ATLASIntelligenceEngine
+from atlas_ie.src.core.engine import ATLASIntelligenceEngine
 
-df_raw = pd.read_csv("Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
+df_raw = pd.read_csv("atlas_ie/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
 engine = ATLASIntelligenceEngine(window=5, sensitivity="loose", domain="f1")
 # Explicitly select the signal (example: LapTime)
 df = df_raw[["LapTime"]]

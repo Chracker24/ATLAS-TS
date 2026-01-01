@@ -35,7 +35,22 @@ class ATLASForecastEngine:
         Returns:
         - Structured forecast output (dict)
         """
+        # Forecasting permission given
+        if "Forecasting_Allowed" not in atlas_ie_output.columns:
+            raise ValueError("Input Dataframe must contain missing 'Forecasting_Allowed' column")
 
+        if not atlas_ie_output["Forecasting_Allowed"].iloc[-1]:
+            return {
+                "forecast" : None,
+                "horizon" : None,
+                "uncertainty" : None,
+                "regime" : atlas_ie_output["Regime_Final"].iloc[-1],
+                "confidence" : atlas_ie_output["Confidence"].iloc[-1],
+                "forecast_type" : None,
+                "message" : "Forecasting blocked by Intelligence Engine"
+            }
+
+        #If nothing
         return {
             "forecast" : None,
             "horizon" : None,
