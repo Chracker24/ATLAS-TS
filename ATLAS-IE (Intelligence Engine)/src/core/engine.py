@@ -64,7 +64,7 @@ DOMAINS = {
 }
 
 
-class MTSEngine:
+class ATLASIntelligenceEngine:
     """
     Core Multi-Domain Time Series Intelligence Engine (ATLAS-IE)
 
