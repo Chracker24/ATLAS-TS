@@ -25,7 +25,7 @@ class ATLASForecastEngine:
     def __init__(self, domain:str | None = None):
         self.domain = domain
 
-    def forecast (self, atlas_ie_output : pd.DataFrame) -> dict:
+    def forecast (self, atlas_ie_output : pd.DataFrame, anchor_index : int | None = None) -> dict:
         """
         Generate forecasts based on Intelligence Engine output
 
@@ -35,6 +35,14 @@ class ATLASForecastEngine:
         Returns:
         - Structured forecast output (dict)
         """
+
+        if anchor_index is None:
+            anchor_index = len(atlas_ie_output) - 1
+        
+        if anchor_index < 0 or anchor_index >= len(atlas_ie_output):
+            raise IndexError("Anchor Index is out of bounds")
+        
+        atlas_ie_output = atlas_ie_output.iloc[:anchor_index + 1]
         # Forecasting permission given
         if "Forecasting_Allowed" not in atlas_ie_output.columns:
             raise ValueError("Input Dataframe must contain missing 'Forecasting_Allowed' column")

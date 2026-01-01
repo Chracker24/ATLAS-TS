@@ -1,3 +1,4 @@
+# From testEngine for Intelligence Engine output
 import pandas as pd
 from atlas_ie.src.core.engine import ATLASIntelligenceEngine as ie
 
@@ -8,4 +9,12 @@ df = df_raw[["LapTime"]]
 
 out = engine.run(df)
 result = engine.results_schema(out)
-print(result.to_string())
+
+
+# now testing Forecast Engine with the output
+
+from atlas_f.forecast_engine import ATLASForecastEngine as af
+engine = af(domain="f1")
+forecast_result = engine.forecast(out, anchor_index = 83)
+print(forecast_result)
+

@@ -167,10 +167,11 @@ class ATLASIntelligenceEngine:
         result = df.copy()
         signal_col = result.select_dtypes(include="number").columns[0]
 
-        return result[[signal_col, "Confidence_Band", "Reasons", "Summary"]].rename(
+        return result[[signal_col, "Confidence_Band", "Forecasting_Allowed", "Reasons", "Summary"]].rename(
             columns={
                 signal_col: f"Signal ({signal_col})",
                 "Confidence_Band": "FORECASTING_STATE",
+                "Forecasting_Allowed": "Forecasting_Allowed",
                 "Reasons": "Forecasting_Reasons"
             }
         )
