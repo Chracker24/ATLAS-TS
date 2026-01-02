@@ -19,11 +19,13 @@ Forecast Modes:
 """
 
 import pandas as pd
-
+from .horizon import select_horizon
+from .forecasting import rolling_mean_forecast, naive_forecast
 
 class ATLASForecastEngine:
-    def __init__(self, domain:str | None = None):
+    def __init__(self, domain:str | None = None, window : int = 3):
         self.domain = domain
+        self.window = window
 
     def forecast (self, atlas_ie_output : pd.DataFrame, anchor_index : int | None = None) -> dict:
         """
@@ -59,12 +61,18 @@ class ATLASForecastEngine:
             }
 
         #If nothing
+        signal_col = atlas_ie_output.select_dtypes(include="number").columns[0]
+        series = atlas_ie_output[signal_col]
+
+        horizon = select_horizon(atlas_ie_output["Regime_Final"].iloc[-1])
+
+        forecast = rolling_mean_forecast(series, window=self.window, horizon= horizon)
         return {
-            "forecast" : None,
-            "horizon" : None,
+            "forecast" : forecast,
+            "horizon" : horizon,
             "uncertainty" : None,
-            "regime" : None,
-            "confidence" : None,
-            "forecast_type" : None,
-            "message" : "Forecasting Logic not implemented yet"
+            "regime" : atlas_ie_output["Regime_Final"].iloc[-1],
+            "confidence" : atlas_ie_output["Confidence"].iloc[-1],
+            "forecast_type" : "baseline_mean",
+            "message" : f"Baseline forecast from index {anchor_index}"
         }
