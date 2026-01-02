@@ -2,6 +2,8 @@ import pandas as pd
 
 def confidenceScore(
         regimeScore : pd.Series,
+        window : int = 3,
+        min_periods : int = 1
 )->pd.Series:
     """
     Takes in a Series of Regime Classifications and 
@@ -16,8 +18,12 @@ def confidenceScore(
         "Stable" : 0.9
     }
 
-    return regimeScore.map(confidenceMap).fillna(0.0)
+    base_confidence = regimeScore.map(confidenceMap).fillna(0.0)
 
+    #Smoothed Confidence Scores
+    confidence_smoothed = base_confidence.rolling(window=window, min_periods = min_periods).mean()
+
+    return confidence_smoothed
 
 def forecastingAllowed(
         confidence : pd.Series,
@@ -29,9 +35,8 @@ def forecastingAllowed(
     Returns a boolean indicating if forecasting is allowed
     """
 
-    forecast = confidence.rolling(window=window-2, min_periods=window-2).mean()
     forecastAllowed = []
-    for i in forecast:
+    for i in confidence:
         if pd.isna(i):
             forecastAllowed.append(False)
         else:

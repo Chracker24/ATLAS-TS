@@ -8,4 +8,4 @@ df = df_raw[["LapTime"]]
 
 out = engine.run(df)
 result = engine.results_schema(out)
-print(result.to_string())
+print(out.to_string())
