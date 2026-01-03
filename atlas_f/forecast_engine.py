@@ -19,60 +19,206 @@ Forecast Modes:
 """
 
 import pandas as pd
-from .horizon import select_horizon
+import numpy as np
+from .horizon import select_horizon, get_model_params, explain_horizon
 from .forecasting import rolling_mean_forecast, naive_forecast
+from .models import simple_exponential_smoothing, double_exponential_smoothing, calculate_prediction_intervals
+
 
 class ATLASForecastEngine:
-    def __init__(self, domain:str | None = None, window : int = 3):
+    def __init__(self, domain:str | None = None, window : int = 3, confidence : float  = 0.9):
         self.domain = domain
         self.window = window
+        self.confidence = confidence
 
-    def forecast (self, atlas_ie_output : pd.DataFrame, anchor_index : int | None = None) -> dict:
+    def forecast (self, atlas_ie_output : pd.DataFrame, anchor_index : int | None = None, scenario_regime : str | None = None, mode : str = "live") -> dict:
         """
         Generate forecasts based on Intelligence Engine output
 
         Parameters:
         - atlas_ie_output : Dataframe by ATLAS-IE
+        - anchor_index : index to get forecast from
+        - regime : the regime data classified
+        - mode : type of forecasting
 
         Returns:
         - Structured forecast output (dict)
         """
-
-        if anchor_index is None:
+        
+        if mode == "live": 
             anchor_index = len(atlas_ie_output) - 1
+        elif mode == "backtest":
+            if anchor_index is None:
+                raise ValueError("Backtest mode requires Anchor Index")
+            if anchor_index < 0 or anchor_index >= len(atlas_ie_output):
+                raise IndexError(f"Anchor Index {anchor_index} out of bounds")
+        elif mode == "scenario":
+            if scenario_regime is None:
+                raise ValueError("Scenario mode needs a Regime")
+            anchor_index = len(atlas_ie_output) - 1
+        else:
+            raise ValueError(f"Unknown Mode '{mode}'. Use 'live', 'backtest' or 'scenario'")
         
-        if anchor_index < 0 or anchor_index >= len(atlas_ie_output):
-            raise IndexError("Anchor Index is out of bounds")
-        
-        atlas_ie_output = atlas_ie_output.iloc[:anchor_index + 1]
-        # Forecasting permission given
-        if "Forecasting_Allowed" not in atlas_ie_output.columns:
-            raise ValueError("Input Dataframe must contain missing 'Forecasting_Allowed' column")
+        data_slice = atlas_ie_output.iloc[:anchor_index + 1].copy()
 
-        if not atlas_ie_output["Forecasting_Allowed"].iloc[-1]:
-            return {
-                "forecast" : None,
-                "horizon" : None,
-                "uncertainty" : None,
-                "regime" : atlas_ie_output["Regime_Final"].iloc[-1],
-                "confidence" : atlas_ie_output["Confidence"].iloc[-1],
-                "forecast_type" : None,
-                "message" : "Forecasting blocked by Intelligence Engine"
-            }
+        required_cols = ["Regime_Final", "Confidence", "Forecasting_Allowed"]
+        missing = [c for c in required_cols if c not in data_slice.columns]
+        if missing:
+            raise ValueError(f"Missing required columns : {missing}")
 
-        #If nothing
-        signal_col = atlas_ie_output.select_dtypes(include="number").columns[0]
-        series = atlas_ie_output[signal_col]
+        regime = scenario_regime if scenario_regime else data_slice["Regime_Final"].iloc[-1]
+        confidence = data_slice["Confidence"].iloc[-1]
+        forecasting_allowed = data_slice["Forecasting_Allowed"].iloc[-1]
+        signal_col = data_slice.select_dtypes(include="number").columns[0]
+        series = data_slice[signal_col]
 
-        horizon = select_horizon(atlas_ie_output["Regime_Final"].iloc[-1])
+        block_reasons = []
 
-        forecast = rolling_mean_forecast(series, window=self.window, horizon= horizon)
-        return {
-            "forecast" : forecast,
+        if not forecasting_allowed:
+            block_reasons.append("ATLAS-IE blocked forecasting")
+
+        if regime in ["Unstable","Unknown"]:
+            block_reasons.append(f"{regime} regime detected")
+
+        if confidence < 0.5:
+            block_reasons.append(f"Low Confidence ({confidence:.1%})")
+
+        if self.domain == 'f1' and series.iloc[-1] > 95:
+            block_reasons.append(f"Anomalous lap time ({series.iloc[-1]:.1f}s)")
+
+        if block_reasons:
+            return self._blocked_response(
+                regime = regime,  # ← Changed
+                confidence = confidence,
+                anchor_index=anchor_index,
+                reasons=block_reasons,
+                mode = mode
+            )
+
+        horizon = select_horizon(regime, self.domain)  # ← Changed
+
+        if horizon == 0:
+            return self._blocked_response(
+                regime = regime,  # ← Changed
+                confidence = confidence,
+                anchor_index=anchor_index,
+                reasons=[f"Zero Horizon for {regime} regime"],  # ← Changed
+                mode = mode
+            )
+
+        params = get_model_params(regime, self.domain)  # ← Changed
+        alpha = params["alpha"]
+        beta = params["beta"]
+
+        if regime == "Stable":  # ← Changed
+            result = simple_exponential_smoothing(series, alpha = alpha, horizon = horizon)
+            model_used = "Simple Exponential Smoothing"
+
+        else:
+            result = double_exponential_smoothing(series, alpha=alpha, beta=beta, horizon=horizon)
+            model_used = "Double Exponential Smoothing (Holt's method)"
+
+
+        lower_bounds, upper_bounds = calculate_prediction_intervals(
+            result['forecast'],
+            result['residuals'],
+            confidence=self.confidence
+        )
+
+        response = {
+            "status" : "PERMITTED",
+            "mode" : mode, 
+            "anchor_index" : anchor_index,
+            "regime" : regime,
+            "confidence" : float(confidence),
+            "domain" : self.domain,
+
             "horizon" : horizon,
-            "uncertainty" : None,
-            "regime" : atlas_ie_output["Regime_Final"].iloc[-1],
-            "confidence" : atlas_ie_output["Confidence"].iloc[-1],
-            "forecast_type" : "baseline_mean",
-            "message" : f"Baseline forecast from index {anchor_index}"
+            "forecast_values" : [float(f) for f in result['forecast']],
+            "lower_bounds" : [float(l) for l in lower_bounds],
+            "upper_bounds" : [float(u) for u in upper_bounds],
+
+            "model": model_used,
+            "parameters" : {
+                "alpha" : alpha,
+                "beta" : beta if 'trend' in result else None
+            },
+            'level' : float(result['level']),
+            'trend' : float(result.get('trend', 0.0)),
+
+            "why_this_horizon" : explain_horizon(regime, self.domain),
+            "why_this_model"  : self._explain_model_choice(regime),
+            "forecast_quality" : self._assess_quality(result['residuals'], confidence)
+        }
+
+        # === ADD THIS BACKTEST SECTION ===
+        if mode == "backtest":
+            actual_end = min(anchor_index + horizon + 1, len(atlas_ie_output))
+            if actual_end > anchor_index + 1:
+                actual_values = atlas_ie_output[signal_col].iloc[anchor_index+1:actual_end].tolist()
+                response["actual_values"] = actual_values
+                response["forecast_error"] = self._calculate_errors(
+                    result['forecast'][:len(actual_values)],
+                    actual_values
+                )
+
+        return response  # ← This stays at the end
+
+    def _blocked_response(
+            self,
+            regime : str,
+            confidence: float,
+            anchor_index: int,
+            reasons:list,
+            mode: str
+    ) -> dict:
+        #Generate reponse for blocked forecasting
+
+        return {
+            'status' : 'BLOCKED',
+            'mode' : mode,
+            'anchor_index' : anchor_index,
+            'regime' : regime,
+            'confidence' : float(confidence),
+            'domain' : self.domain,
+            'horizon' : 0,
+            'forecast_values' : None,
+            'reasons' : reasons,
+            'message' : 'Forecasting Blocked: ' + ';'.join(reasons) 
+        }
+    
+    def _explain_model_choice(self, regime : str)-> str:
+        if regime == "Stable":
+            return "Simple ES used - stable regime expects flat trajectory"
+        elif regime == "Transitional":
+            return "Double ES used - transitional regime may have trend component"
+        else:
+            return f"No Model - {regime} regime"
+        
+
+    def _assess_quality(self, residuals: np.ndarray, confidence: float) -> str:
+        #Assess forecast quality based on residuals and confidence
+
+        std = np.std(residuals)
+        mae = np.mean(np.abs(residuals))
+
+        if confidence >= 0.8 and mae < 0.5:
+            return "High Quality - low historical error and high confidence"
+        elif confidence >= 0.6 and mae < 1.0:
+            return "Medium Quality - moderate error and confidence"
+        else:
+            return "Low quality - high historical error or low confidence"
+        
+    
+    def _calculate_errors(self, forecast: list, actual: list) -> dict:
+        forecast = np.array(forecast)
+        actual = np.array(actual)
+
+        errors = actual - forecast
+
+        return {
+            "MAE" : float(np.mean(np.abs(errors))),
+            "RMSE" : float(np.sqrt(np.mean(errors**2))),
+            "MAPE" : float(np.mean(np.abs(errors/actual))*100),
+            "errors" : errors.tolist()
         }
