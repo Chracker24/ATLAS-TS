@@ -40,19 +40,21 @@ if result_live['status'] == "PERMITTED":
     print(f"Why this model: {result_live['why_this_model']}")
     print(f"Quality: {result_live['forecast_quality']}")
 else:
-    print(f"\nBlocked: {result_live['message']}")
+    print(f"\nReaons: {result_live['message']}")
 
 
 # === TEST 2: BACKTEST (Lap 83 - Middle of Stable Period) ===
 print("\n\n" + "=" * 60)
 print("TEST 2: BACKTEST (from lap 83 - stable period)")
 print("=" * 60)
-
-result_backtest = f_engine.forecast(ie_output, mode="backtest", anchor_index=83)
+engine = FE(domain="f1")
+result_backtest = engine.forecast(ie_output, mode="backtest", anchor_index=111)
 
 print(f"Status: {result_backtest['status']}")
 print(f"Forecasting from lap: {result_backtest['anchor_index']}")
 print(f"Regime: {result_backtest['regime']}")
+if result_backtest['reasons']:
+    print(f"Reasons: {result_backtest['message']}")
 
 if result_backtest['status'] == "PERMITTED":
     print(f"\nForecast: {[f'{x:.2f}' for x in result_backtest['forecast_values'][:5]]}")
@@ -79,7 +81,7 @@ print(f"Status: {result_scenario['status']}")
 print(f"Overridden regime: {result_scenario['regime']}")
 
 if result_scenario['status'] == "BLOCKED":
-    print(f"Blocked: {result_scenario['message']}")
+    print(f"Reasons: {result_scenario['message']}")
 else:
     print(f"Forecast: {result_scenario['forecast_values']}")
 

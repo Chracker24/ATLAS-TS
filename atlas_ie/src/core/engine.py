@@ -2,6 +2,7 @@ import pandas as pd
 
 from .validation import find_error_inInput
 from .confidence import confidenceScore, forecastingAllowed, confidenceBand
+from .index import indexing
 
 from ..regime.regime_instantaneous import classify_regimes
 from ..regime.regime_persistance import regime_persistance
@@ -165,13 +166,38 @@ class ATLASIntelligenceEngine:
         """
 
         result = df.copy()
-        signal_col = result.select_dtypes(include="number").columns[0]
+        refBool = indexing(result)
+        if refBool:
+            signal_col = result.select_dtypes(include="number").columns[0]
+            ref_col= result.select_dtypes(exclude="number").columns[0]
+            result = result[[ref_col,signal_col, "Confidence_Band", "Forecasting_Allowed", "Reasons", "Summary"]].rename(
+                columns={
+                    ref_col : f"Reference ({ref_col})",
+                    signal_col: f"Signal ({signal_col})",
+                    "Confidence_Band": "FORECASTING_STATE",
+                    "Forecasting_Allowed": "Forecasting_Allowed",
+                    "Reasons": "Forecasting_Reasons"
+                }
+            ).drop_duplicates(subset=f"Reference ({ref_col})", keep="last").set_index(f"Reference ({ref_col})")
 
-        return result[[signal_col, "Confidence_Band", "Forecasting_Allowed", "Reasons", "Summary"]].rename(
-            columns={
-                signal_col: f"Signal ({signal_col})",
-                "Confidence_Band": "FORECASTING_STATE",
-                "Forecasting_Allowed": "Forecasting_Allowed",
-                "Reasons": "Forecasting_Reasons"
-            }
-        )
+            assert f"Reference ({ref_col})" in result.columns, "Reference missing in the Columns"
+        else:
+            signal_col = result.select_dtypes(include="number").columns[0]
+            result = result[[signal_col, "Confidence_Band", "Forecasting_Allowed", "Reasons", "Summary"]].rename(
+                columns={
+                    signal_col: f"Signal ({signal_col})",
+                    "Confidence_Band": "FORECASTING_STATE",
+                    "Forecasting_Allowed": "Forecasting_Allowed",
+                    "Reasons": "Forecasting_Reasons"
+                }
+            )
+        assert "FORECASTING_STATE" in result.columns, "Forecasting column missing in Columns"
+        assert result.index.is_unique, "ERROR : Index must be Unique"
+
+        result.index = result.index.astype(int)
+
+        return result
+
+
+
+        

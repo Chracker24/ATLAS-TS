@@ -40,6 +40,9 @@ class ATLASForecastEngine:
         - anchor_index : index to get forecast from
         - regime : the regime data classified
         - mode : type of forecasting
+         - live : forecasts what is going to happen next
+         - backtest : forecasts the possible scenarios at a certain point of time
+         - scenario : forecasts what wouldve happen under a different regime 
 
         Returns:
         - Structured forecast output (dict)
@@ -60,7 +63,6 @@ class ATLASForecastEngine:
             raise ValueError(f"Unknown Mode '{mode}'. Use 'live', 'backtest' or 'scenario'")
         
         data_slice = atlas_ie_output.iloc[:anchor_index + 1].copy()
-
         required_cols = ["Regime_Final", "Confidence", "Forecasting_Allowed"]
         missing = [c for c in required_cols if c not in data_slice.columns]
         if missing:
@@ -71,7 +73,6 @@ class ATLASForecastEngine:
         forecasting_allowed = data_slice["Forecasting_Allowed"].iloc[-1]
         signal_col = data_slice.select_dtypes(include="number").columns[0]
         series = data_slice[signal_col]
-
         block_reasons = []
 
         if not forecasting_allowed:
