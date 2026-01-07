@@ -119,7 +119,7 @@ class ATLASIntelligenceEngine:
 
         print(f"Running ATLAS-IE with sensitivity='{self.sensitivity}' with {self.domain if self.domain else "no"} domain")
 
-        # Input validation
+        
         find_error_inInput(df, self.window)
 
         result = df.copy()
@@ -179,7 +179,7 @@ class ATLASIntelligenceEngine:
                     "Reasons": "Forecasting_Reasons"
                 }
             ).drop_duplicates(subset=f"Reference ({ref_col})", keep="last").set_index(f"Reference ({ref_col})")
-
+            print(result.columns().tolist())
             assert f"Reference ({ref_col})" in result.columns, "Reference missing in the Columns"
         else:
             signal_col = result.select_dtypes(include="number").columns[0]
