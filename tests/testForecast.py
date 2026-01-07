@@ -2,15 +2,11 @@
 import pandas as pd
 from atlas_ie.src.core.engine import ATLASIntelligenceEngine as ie
 
-df_raw = pd.read_csv("atlas_ie/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
+df= pd.read_csv("atlas_ie/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
 engine_window = 5
 engine = ie(window=engine_window, sensitivity="loose", domain="f1")
-# Explicitly select the signal (example: LapTime)
-df = df_raw[["LapTime"]]
 
 out = engine.run(df)
-result = engine.results_schema(out)
-
 
 # now testing Forecast Engine with the output
 

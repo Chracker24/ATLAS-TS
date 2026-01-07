@@ -118,12 +118,14 @@ class ATLASIntelligenceEngine:
         """
 
         print(f"Running ATLAS-IE with sensitivity='{self.sensitivity}' with {self.domain if self.domain else "no"} domain")
-
         
+        dfref = indexing(df)
+        df = dfref[0]
+        refBool = dfref[1]
+
         find_error_inInput(df, self.window)
 
         result = df.copy()
-
         # Signal Column
         signal_col = result.select_dtypes(include="number").columns[0]
 
@@ -158,35 +160,39 @@ class ATLASIntelligenceEngine:
         result["Reasons"] = reasons(result["Regime_Final"])
         result["Summary"] = result["Reasons"].apply(summary)
 
-        return result
+        return self.results_schema(result, refBool)
 
-    def results_schema(self, df: pd.DataFrame) -> pd.DataFrame:
+    def results_schema(self, df: pd.DataFrame, refBool : bool = False) -> pd.DataFrame:
         """
         Produce a schema of the results that is human Readable.
         """
 
         result = df.copy()
-        refBool = indexing(result)
         if refBool:
             signal_col = result.select_dtypes(include="number").columns[0]
             ref_col= result.select_dtypes(exclude="number").columns[0]
-            result = result[[ref_col,signal_col, "Confidence_Band", "Forecasting_Allowed", "Reasons", "Summary"]].rename(
+            result = result[[ref_col,signal_col, "Regime_Final", "Confidence_Band","Confidence", "Forecasting_Allowed", "Reasons", "Summary"]].rename(
                 columns={
                     ref_col : f"Reference ({ref_col})",
                     signal_col: f"Signal ({signal_col})",
-                    "Confidence_Band": "FORECASTING_STATE",
+                    "Regime_Final" : "Regime",
+                    "Confidence_Band" : "FORECASTING_STATE",
+                    "Confidence" : "Confidence",
                     "Forecasting_Allowed": "Forecasting_Allowed",
                     "Reasons": "Forecasting_Reasons"
                 }
             ).drop_duplicates(subset=f"Reference ({ref_col})", keep="last").set_index(f"Reference ({ref_col})")
-            print(result.columns().tolist())
-            assert f"Reference ({ref_col})" in result.columns, "Reference missing in the Columns"
+            print(result.columns.tolist())
+            assert result.index.name == f"Reference ({ref_col})"
+
         else:
             signal_col = result.select_dtypes(include="number").columns[0]
-            result = result[[signal_col, "Confidence_Band", "Forecasting_Allowed", "Reasons", "Summary"]].rename(
+            result = result[[signal_col, "Regime_Final", "Confidence_Band", "Confidence", "Forecasting_Allowed", "Reasons", "Summary"]].rename(
                 columns={
                     signal_col: f"Signal ({signal_col})",
-                    "Confidence_Band": "FORECASTING_STATE",
+                    "Regime_Final" : "Regime",
+                    "Confidence_Band" : "FORECASTING_STATE",
+                    "Confidence" : "Confidence",
                     "Forecasting_Allowed": "Forecasting_Allowed",
                     "Reasons": "Forecasting_Reasons"
                 }
@@ -194,7 +200,6 @@ class ATLASIntelligenceEngine:
         assert "FORECASTING_STATE" in result.columns, "Forecasting column missing in Columns"
         assert result.index.is_unique, "ERROR : Index must be Unique"
 
-        result.index = result.index.astype(int)
 
         return result
 
