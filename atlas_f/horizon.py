@@ -90,7 +90,7 @@ def get_model_params (
         regime : str,
         domain : str
 ) -> dict:
-    #To get Alpha and beta
+    #To get Alpha and Beta
     if domain not in MODEL_PARAMS:
         return {"alpha": 0.5, "beta": 0.3}  # Default params
     

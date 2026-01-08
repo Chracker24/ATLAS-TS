@@ -8,8 +8,8 @@ from atlas_f.forecast_engine import ATLASForecastEngine as FE
 
 
 # === LOAD DATA ===
-df_raw = pd.read_csv("atlas_ie/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
-df = df_raw[["LapTime"]]
+df= pd.read_csv("atlas_ie/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
+
 
 # Run IE
 ie_engine = IE(domain="f1")
@@ -48,12 +48,12 @@ print("\n\n" + "=" * 60)
 print("TEST 2: BACKTEST (from lap 83 - stable period)")
 print("=" * 60)
 engine = FE(domain="f1")
-result_backtest = engine.forecast(ie_output, mode="backtest", anchor_index=111)
+result_backtest = engine.forecast(ie_output, mode="backtest", anchor_index=43)
 
 print(f"Status: {result_backtest['status']}")
 print(f"Forecasting from lap: {result_backtest['anchor_index']}")
 print(f"Regime: {result_backtest['regime']}")
-if result_backtest['reasons']:
+if 'reasons' in result_backtest.keys():
     print(f"Reasons: {result_backtest['message']}")
 
 if result_backtest['status'] == "PERMITTED":

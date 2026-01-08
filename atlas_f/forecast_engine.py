@@ -23,6 +23,7 @@ import numpy as np
 from .horizon import select_horizon, get_model_params, explain_horizon
 from .forecasting import rolling_mean_forecast, naive_forecast
 from .models import simple_exponential_smoothing, double_exponential_smoothing, calculate_prediction_intervals
+from .explain import _assess_quality, _explain_model_choice, _calculate_errors
 
 
 class ATLASForecastEngine:
@@ -63,12 +64,12 @@ class ATLASForecastEngine:
             raise ValueError(f"Unknown Mode '{mode}'. Use 'live', 'backtest' or 'scenario'")
         
         data_slice = atlas_ie_output.iloc[:anchor_index + 1].copy()
-        required_cols = ["Regime_Final", "Confidence", "Forecasting_Allowed"]
+        required_cols = ["Regime", "Confidence", "Forecasting_Allowed"]
         missing = [c for c in required_cols if c not in data_slice.columns]
         if missing:
             raise ValueError(f"Missing required columns : {missing}")
 
-        regime = scenario_regime if scenario_regime else data_slice["Regime_Final"].iloc[-1]
+        regime = scenario_regime if scenario_regime else data_slice["Regime"].iloc[-1]
         confidence = data_slice["Confidence"].iloc[-1]
         forecasting_allowed = data_slice["Forecasting_Allowed"].iloc[-1]
         signal_col = data_slice.select_dtypes(include="number").columns[0]
@@ -148,8 +149,8 @@ class ATLASForecastEngine:
             'trend' : float(result.get('trend', 0.0)),
 
             "why_this_horizon" : explain_horizon(regime, self.domain),
-            "why_this_model"  : self._explain_model_choice(regime),
-            "forecast_quality" : self._assess_quality(result['residuals'], confidence)
+            "why_this_model"  : _explain_model_choice(regime),
+            "forecast_quality" : _assess_quality(result['residuals'], confidence)
         }
 
         # === ADD THIS BACKTEST SECTION ===
@@ -158,7 +159,7 @@ class ATLASForecastEngine:
             if actual_end > anchor_index + 1:
                 actual_values = atlas_ie_output[signal_col].iloc[anchor_index+1:actual_end].tolist()
                 response["actual_values"] = actual_values
-                response["forecast_error"] = self._calculate_errors(
+                response["forecast_error"] = _calculate_errors(
                     result['forecast'][:len(actual_values)],
                     actual_values
                 )
@@ -188,38 +189,3 @@ class ATLASForecastEngine:
             'message' : 'Forecasting Blocked: ' + ';'.join(reasons) 
         }
     
-    def _explain_model_choice(self, regime : str)-> str:
-        if regime == "Stable":
-            return "Simple ES used - stable regime expects flat trajectory"
-        elif regime == "Transitional":
-            return "Double ES used - transitional regime may have trend component"
-        else:
-            return f"No Model - {regime} regime"
-        
-
-    def _assess_quality(self, residuals: np.ndarray, confidence: float) -> str:
-        #Assess forecast quality based on residuals and confidence
-
-        std = np.std(residuals)
-        mae = np.mean(np.abs(residuals))
-
-        if confidence >= 0.8 and mae < 0.5:
-            return "High Quality - low historical error and high confidence"
-        elif confidence >= 0.6 and mae < 1.0:
-            return "Medium Quality - moderate error and confidence"
-        else:
-            return "Low quality - high historical error or low confidence"
-        
-    
-    def _calculate_errors(self, forecast: list, actual: list) -> dict:
-        forecast = np.array(forecast)
-        actual = np.array(actual)
-
-        errors = actual - forecast
-
-        return {
-            "MAE" : float(np.mean(np.abs(errors))),
-            "RMSE" : float(np.sqrt(np.mean(errors**2))),
-            "MAPE" : float(np.mean(np.abs(errors/actual))*100),
-            "errors" : errors.tolist()
-        }
