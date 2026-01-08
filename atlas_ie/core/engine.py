@@ -77,7 +77,7 @@ class ATLASIntelligenceEngine:
     def __init__(
         self,
         window: int = 5,
-        sensitivity: str = "normal",
+        sensitivity: str | None = "normal",
         domain: str | None = None
     ):
         # --- Domain override ---

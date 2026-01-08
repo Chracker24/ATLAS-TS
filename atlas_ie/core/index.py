@@ -9,8 +9,8 @@ def indexing(df : pd.DataFrame) -> tuple[pd.DataFrame,bool]:
         for i in cols:
             print(i)
         ind = input("\nIs there a column that you would like to be a reference out of the following? (Y/N) :")
-        if ind in ["Y", "Yes", "yes","y"]:
-            c = input("Enter the name of the column")
+        if ind.strip() in ["Y", "Yes", "yes","y"]:
+            c = input("Enter the name of the column : ")
             c = c.strip()
             if c not in cols:
                 raise ValueError("The Column does not exist in the Dataframe")

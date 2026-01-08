@@ -7,19 +7,19 @@ from atlas_ie.core.engine import ATLASIntelligenceEngine as IE
 from atlas_f.forecast_engine import ATLASForecastEngine as FE
 
 
-# === LOAD DATA ===
+# Loading Data
 df= pd.read_csv("01_Data_Handling/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
 
 
-# Run IE
+# Run Intelligence Engine
 ie_engine = IE(domain="f1")
 ie_output = ie_engine.run(df)
 
-# Create F engine
+# Create Forecast engine
 f_engine = FE(domain="f1")
 
 
-# === TEST 1: LIVE FORECAST ===
+# TEST 1: LIVE FORECAST
 print("=" * 60)
 print("TEST 1: LIVE FORECAST (from latest data)")
 print("=" * 60)
@@ -40,7 +40,7 @@ if result_live['status'] == "PERMITTED":
     print(f"Why this model: {result_live['why_this_model']}")
     print(f"Quality: {result_live['forecast_quality']}")
 else:
-    print(f"\nReaons: {result_live['message']}")
+    print(f"\nReasons: {result_live['message']}")
 
 
 # === TEST 2: BACKTEST (Lap 83 - Middle of Stable Period) ===
