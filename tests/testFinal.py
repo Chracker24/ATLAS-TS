@@ -3,12 +3,12 @@ Test ATLAS-F on F1 data with all 3 modes.
 """
 
 import pandas as pd
-from atlas_ie.src.core.engine import ATLASIntelligenceEngine as IE
+from atlas_ie.core.engine import ATLASIntelligenceEngine as IE
 from atlas_f.forecast_engine import ATLASForecastEngine as FE
 
 
 # === LOAD DATA ===
-df= pd.read_csv("atlas_ie/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
+df= pd.read_csv("01_Data_Handling/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
 
 
 # Run IE
@@ -33,7 +33,7 @@ print(f"Horizon: {result_live.get('horizon', 0)} laps")
 
 if result_live['status'] == "PERMITTED":
     print(f"\nModel: {result_live['model']}")
-    print(f"Parameters: α={result_live['parameters']['alpha']:.2f}, β={result_live['parameters'].get('beta', 'N/A')}")
+    print(f"Parameters: Alpha={result_live['parameters']['alpha']:.2f}, Beta={result_live['parameters'].get('beta', 'N/A')}")
     print(f"\nForecast: {[f'{x:.2f}' for x in result_live['forecast_values']]}")
     print(f"90% Bounds: {[f'{x:.2f}' for x in result_live['lower_bounds']]} to {[f'{x:.2f}' for x in result_live['upper_bounds']]}")
     print(f"\nWhy this horizon: {result_live['why_this_horizon']}")
@@ -44,11 +44,12 @@ else:
 
 
 # === TEST 2: BACKTEST (Lap 83 - Middle of Stable Period) ===
-print("\n\n" + "=" * 60)
-print("TEST 2: BACKTEST (from lap 83 - stable period)")
-print("=" * 60)
+anchr_indx = 43
 engine = FE(domain="f1")
-result_backtest = engine.forecast(ie_output, mode="backtest", anchor_index=43)
+result_backtest = engine.forecast(ie_output, mode="backtest", anchor_index=anchr_indx)
+print("\n\n" + "=" * 60)
+print(f"TEST 2: BACKTEST (from lap {anchr_indx}  - stable period)")
+print("=" * 60)
 
 print(f"Status: {result_backtest['status']}")
 print(f"Forecasting from lap: {result_backtest['anchor_index']}")

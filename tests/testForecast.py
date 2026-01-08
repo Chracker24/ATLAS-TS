@@ -1,6 +1,6 @@
 # From testEngine for Intelligence Engine output
 import pandas as pd
-from atlas_ie.src.core.engine import ATLASIntelligenceEngine as ie
+from atlas_ie.core.engine import ATLASIntelligenceEngine as ie
 
 df= pd.read_csv("atlas_ie/Data/Canonical/lewisHamilton_AbuDhabi_2021.csv")
 engine_window = 5

@@ -76,3 +76,30 @@ Most forecasting systems fail because they:
 - provide no justification
 
 ATLAS-IE exists to prevent those failures.
+
+## Structure
+```
+atlas_ie/
+├── __pycache__/
+├── core/
+│   ├── __pycache__/
+│   ├── __init__.py
+│   ├── confidence.py
+│   ├── engine.py
+│   ├── index.py
+│   ├── validation.py
+│   └── README.md
+├── explainability/
+│   ├── __pycache__/
+│   ├── __init__.py
+│   ├── explainability.py
+│   └── README.md
+├── regime/
+│   ├── __pycache__/
+│   ├── __init__.py
+│   ├── regime_instantaneous.py
+│   ├── regime_persistance.py
+│   └── README.md
+├── __init__.py
+└── README.md
+```

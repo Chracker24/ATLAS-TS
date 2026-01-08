@@ -90,29 +90,29 @@ class ATLASForecastEngine:
 
         if block_reasons:
             return self._blocked_response(
-                regime = regime,  # ← Changed
+                regime = regime, 
                 confidence = confidence,
                 anchor_index=anchor_index,
                 reasons=block_reasons,
                 mode = mode
             )
 
-        horizon = select_horizon(regime, self.domain)  # ← Changed
+        horizon = select_horizon(regime, self.domain) 
 
         if horizon == 0:
             return self._blocked_response(
-                regime = regime,  # ← Changed
+                regime = regime, 
                 confidence = confidence,
                 anchor_index=anchor_index,
-                reasons=[f"Zero Horizon for {regime} regime"],  # ← Changed
+                reasons=[f"Zero Horizon for {regime} regime"], 
                 mode = mode
             )
 
-        params = get_model_params(regime, self.domain)  # ← Changed
+        params = get_model_params(regime, self.domain) 
         alpha = params["alpha"]
         beta = params["beta"]
 
-        if regime == "Stable":  # ← Changed
+        if regime == "Stable": 
             result = simple_exponential_smoothing(series, alpha = alpha, horizon = horizon)
             model_used = "Simple Exponential Smoothing"
 
@@ -153,7 +153,7 @@ class ATLASForecastEngine:
             "forecast_quality" : _assess_quality(result['residuals'], confidence)
         }
 
-        # === ADD THIS BACKTEST SECTION ===
+        # backtest section
         if mode == "backtest":
             actual_end = min(anchor_index + horizon + 1, len(atlas_ie_output))
             if actual_end > anchor_index + 1:
@@ -164,7 +164,7 @@ class ATLASForecastEngine:
                     actual_values
                 )
 
-        return response  # ← This stays at the end
+        return response
 
     def _blocked_response(
             self,
