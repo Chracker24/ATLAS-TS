@@ -76,7 +76,7 @@ print("=" * 60)
 # Slice to lap 80
 ie_slice = ie_output.iloc[:81].copy()
 
-result_scenario = f_engine.forecast(ie_slice, mode="scenario", scenario_regime="Unstable")
+result_scenario = f_engine.forecast(ie_slice, mode="scenario", scenario_regime="Transitional")
 
 print(f"Status: {result_scenario['status']}")
 print(f"Overridden regime: {result_scenario['regime']}")

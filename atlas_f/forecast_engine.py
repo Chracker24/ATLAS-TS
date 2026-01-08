@@ -62,7 +62,10 @@ class ATLASForecastEngine:
             anchor_index = len(atlas_ie_output) - 1
         else:
             raise ValueError(f"Unknown Mode '{mode}'. Use 'live', 'backtest' or 'scenario'")
-        
+        if mode=="scenario" and scenario_regime=="Stable":
+            atlas_ie_output.iloc[-1, atlas_ie_output.columns.get_loc("FORECASTING_STATE")] = "PERMITTED"
+            atlas_ie_output.loc[-1, "Forecasting_Allowed"] = True
+    
         data_slice = atlas_ie_output.iloc[:anchor_index + 1].copy()
         required_cols = ["Regime", "Confidence", "Forecasting_Allowed"]
         missing = [c for c in required_cols if c not in data_slice.columns]
