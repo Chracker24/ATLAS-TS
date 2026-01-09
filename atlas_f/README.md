@@ -44,10 +44,10 @@ print(result)
 - **Scenario**: Forecasts under hypothetical regime changes (e.g., "What if lap 15 was Unstable?" in the Formula 1 domain).
 
 ## Testing
-- **Live**: [tests.testForecastLive]("https://github.com/Chracker24/ATLAS-TS/blob/main/tests/testForecastLive.py")
-- **BackTest**: [tests.testForecastBacktest]("https://github.com/Chracker24/ATLAS-TS/blob/main/tests/testForecastBacktest.py")
-- **Scenario**: ["tests.testForecastScenario]("https://github.com/Chracker24/ATLAS-TS/blob/main/tests/testForecastScenario.py")
-- **Final All modes together**: ["tests.testFinal]("https://github.com/Chracker24/ATLAS-TS/blob/main/tests/testFinal.py")
+- **Live**: [tests.testForecastLive](https://github.com/Chracker24/ATLAS-TS/blob/main/tests/testForecastLive.py)
+- **BackTest**: [tests.testForecastBacktest](https://github.com/Chracker24/ATLAS-TS/blob/main/tests/testForecastBacktest.py)
+- **Scenario**: ["tests.testForecastScenario](https://github.com/Chracker24/ATLAS-TS/blob/main/tests/testForecastScenario.py)
+- **Final All modes together**: ["tests.testFinal](https://github.com/Chracker24/ATLAS-TS/blob/main/tests/testFinal.py)
 
 ## Integration with ATLAS-IE
 ATLAS-F is tightly coupled with ATLAS-IE. It relies on ATLAS-IE for:

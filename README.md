@@ -35,9 +35,9 @@ ATLAS-F **never overrides intelligence decisions**.
 
 ---
 ### 🧾Data Sources
-- Canonical datasets (see [Canonical Datasets]("https://github.com/Chracker24/ATLAS-TS/tree/main/01_Data_Handling/Data/Canonical"))
+- Canonical datasets (see [Canonical Datasets](https://github.com/Chracker24/ATLAS-TS/tree/main/01_Data_Handling/Data/Canonical))
 - Data collected via the **FastF1 API** for the F1 Domain
-Custom test scrupts and scenarios
+- Custom test scripts and scenarios
 
 ## 🌍 Domain-Agnostic by Design
 ATLAS makes **no domain assumptions**.  
