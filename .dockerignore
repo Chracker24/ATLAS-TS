@@ -1,0 +1,5 @@
+__pycache__/
+.ipynb_checkpoints/
+data/
+tests/
+fastf1_http_cache.sqlite
