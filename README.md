@@ -110,16 +110,16 @@ ATLAS/
 │       ├── regime_instantaneous.py
 │       └── regime_persistance.py
 ├── tests/
-│   ├── __init__.py
-│   ├── README.md
-│   ├── testDes.py
-│   ├── testEngine.py
-│   ├── testFinal.py
-│   ├── testForecast.py
-│   ├── testForecastBacktest.py
-│   ├── testForecastLive.py
-│   ├── testForecastScenario.py
-│   └── testSes.py
+    ├── __init__.py
+    ├── README.md
+    ├── testDes.py
+    ├── testEngine.py
+    ├── testFinal.py
+    ├── testForecast.py
+    ├── testForecastBacktest.py
+    ├── testForecastLive.py
+    ├── testForecastScenario.py
+    └── testSes.py
 ```
 ## 🚦 Quickstart Examples
 
