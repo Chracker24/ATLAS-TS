@@ -109,7 +109,7 @@ ATLAS/
 │       ├── README.md
 │       ├── regime_instantaneous.py
 │       └── regime_persistance.py
-├── tests/
+└── tests/
     ├── __init__.py
     ├── README.md
     ├── testDes.py
